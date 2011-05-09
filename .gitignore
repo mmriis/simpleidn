@@ -1,0 +1,4 @@
+spec/*.yml
+.rvmrc
+doc
+pkg
