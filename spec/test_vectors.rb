@@ -1,3 +1,4 @@
+# encoding: utf-8
 # JOSEFSSON test vectors, taken from DRAFT-JOSEFSSON-IDN-TEST-VECTORS-00:
 # http://www.gnu.org/software/libidn/draft-josefsson-idn-test-vectors.html
 #

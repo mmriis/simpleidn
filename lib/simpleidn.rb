@@ -228,7 +228,7 @@ module SimpleIDN
     i = 0
     while i < domain_array.length
       s = domain_array[i]
-      out << (s =~ /[^A-Z0-9\-]/i ? "xn--" + Punycode.encode(s) : s)
+      out << (s =~ /[^A-Z0-9\-*]/i ? "xn--" + Punycode.encode(s) : s)
       i += 1
     end
     return out.join(".")
