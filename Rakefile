@@ -3,7 +3,7 @@ require 'rubygems'
 require 'rake'
 require 'echoe'
 
-Echoe.new('simpleidn', '0.0.2') do |p|
+Echoe.new('simpleidn', '0.0.3') do |p|
   p.description    = "This gem allows easy conversion from punycode ACE strings to unicode UTF-8 strings and visa versa."
   p.url            = "http://github.com/mmriis/simpleidn"
   p.author         = "Morten Møller Riis"
