@@ -14,7 +14,13 @@ describe "SimpleIDN" do
     it "should respect * and not try to decode it" do
       SimpleIDN.to_unicode("*.xn--mllerriis-l8a.com").should == "*.møllerriis.com"
     end
+  
+    it "should return nil for nil" do
+      SimpleIDN.to_unicode(nil).should be_nil
+    end
+  
   end
+  
   describe "to_ascii" do
     it "should pass all test cases" do
       TESTCASES_JOSEFSSON.sort.each do |testcase, vector|
@@ -25,5 +31,10 @@ describe "SimpleIDN" do
     it "should respect * and not try to encode it" do
 			SimpleIDN.to_ascii("*.hello.com").should == "*.hello.com"
 		end
+		
+		
+    it "should return nil for nil" do
+      SimpleIDN.to_ascii(nil).should be_nil
+    end
   end
 end

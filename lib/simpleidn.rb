@@ -223,6 +223,7 @@ module SimpleIDN
   #   SimpleIDN.to_ascii("møllerriis.com")
   #    => "xn--mllerriis-l8a.com" 
   def to_ascii(domain) 
+    return if domain.nil?
     domain_array = domain.split(".")
     out = []
     i = 0
@@ -239,6 +240,7 @@ module SimpleIDN
   #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
   #    => "møllerriis.com" 
   def to_unicode(domain)
+    return if domain.nil?
     domain_array = domain.split(".")
     out = []
     i = 0
