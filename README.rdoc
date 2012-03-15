@@ -4,7 +4,7 @@ This gem allows easy conversion from punycode ACE strings to unicode UTF-8 strin
 
 The implementation is heavily based on the RFC3492 C example implementation but simplified since it does not preserve case.
 
-This gem works with both Ruby 1.8.7 and 1.9.2.
+This gem works with both Ruby 1.8.7, 1.9.2 and 1.9.3.
 
 * http://www.whatastruggle.com
 

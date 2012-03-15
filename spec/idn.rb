@@ -14,6 +14,10 @@ describe "SimpleIDN" do
     it "should respect * and not try to decode it" do
       SimpleIDN.to_unicode("*.xn--mllerriis-l8a.com").should == "*.møllerriis.com"
     end
+    
+    it "should respect leading _ and not try to encode it" do
+		  SimpleIDN.to_unicode("_something.xn--mllerriis-l8a.com").should == "_something.møllerriis.com"
+	  end
   
     it "should return nil for nil" do
       SimpleIDN.to_unicode(nil).should be_nil
@@ -32,6 +36,9 @@ describe "SimpleIDN" do
 			SimpleIDN.to_ascii("*.hello.com").should == "*.hello.com"
 		end
 		
+		it "should respect leading _ and not try to encode it" do
+		  SimpleIDN.to_ascii("_something.example.org").should == "_something.example.org"
+	  end
 		
     it "should return nil for nil" do
       SimpleIDN.to_ascii(nil).should be_nil
