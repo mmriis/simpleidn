@@ -3,5 +3,6 @@ Manifest
 README.rdoc
 Rakefile
 lib/simpleidn.rb
+simpleidn.gemspec
 spec/idn.rb
 spec/test_vectors.rb
