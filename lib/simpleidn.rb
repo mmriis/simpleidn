@@ -222,9 +222,9 @@ module SimpleIDN
   # == Example
   #   SimpleIDN.to_ascii("møllerriis.com")
   #    => "xn--mllerriis-l8a.com" 
-  def to_ascii(domain) 
-    return if domain.nil?
-    domain_array = domain.split(".")
+  def to_ascii(domain)
+    domain_array = domain.split(".") rescue []
+    return domain if domain_array.length == 0
     out = []
     i = 0
     while i < domain_array.length
@@ -240,8 +240,8 @@ module SimpleIDN
   #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
   #    => "møllerriis.com" 
   def to_unicode(domain)
-    return if domain.nil?
-    domain_array = domain.split(".")
+    domain_array = domain.split(".") rescue []
+    return domain if domain_array.length == 0
     out = []
     i = 0
     while i < domain_array.length

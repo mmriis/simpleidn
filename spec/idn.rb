@@ -22,6 +22,11 @@ describe "SimpleIDN" do
     it "should return nil for nil" do
       SimpleIDN.to_unicode(nil).should be_nil
     end
+
+    it "should return . if only . given" do
+      # https://github.com/mmriis/simpleidn/issues/3
+      SimpleIDN.to_unicode('.').should == '.'
+    end
   
   end
   
@@ -42,6 +47,11 @@ describe "SimpleIDN" do
 		
     it "should return nil for nil" do
       SimpleIDN.to_ascii(nil).should be_nil
+    end
+
+    it "should return . if only . given" do
+      # https://github.com/mmriis/simpleidn/issues/3
+      SimpleIDN.to_ascii('.').should == '.'
     end
   end
 end
