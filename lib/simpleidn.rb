@@ -7,7 +7,7 @@ if RUBY_VERSION =~ /^1\.8/
     end
   end
 else
-  Encoding.default_internal = "UTF-8"  
+  Encoding.default_internal = "UTF-8"
 end
 
 class Integer
@@ -21,7 +21,7 @@ module SimpleIDN
   VERSION = "0.0.5"
 
   module Punycode
-    
+
     INITIAL_N = 0x80
     INITIAL_BIAS = 72
     DELIMITER = 0x2D
@@ -32,26 +32,26 @@ module SimpleIDN
     SKEW = 38
     MAXINT = 0x7FFFFFFF
 
-    module_function  
-    
-    # decode_digit(cp) returns the numeric value of a basic code 
+    module_function
+
+    # decode_digit(cp) returns the numeric value of a basic code
     # point (for use in representing integers) in the range 0 to
-    # base-1, or base if cp is does not represent a value. 
+    # base-1, or base if cp is does not represent a value.
     def decode_digit(cp)
       cp - 48 < 10 ? cp - 22 : cp - 65 < 26 ? cp - 65 : cp - 97 < 26 ? cp - 97 : BASE
     end
-  
+
     # encode_digit(d,flag) returns the basic code point whose value
     # (when used for representing integers) is d, which needs to be in
     # the range 0 to base-1. The lowercase form is used unless flag is
     # nonzero, in which case the uppercase form is used. The behavior
-    # is undefined if flag is nonzero and digit d has no uppercase form. 
+    # is undefined if flag is nonzero and digit d has no uppercase form.
     def encode_digit(d)
       d + 22 + 75 * (d < 26 ? 1 : 0)
-      #  0..25 map to ASCII a..z or A..Z 
+      #  0..25 map to ASCII a..z or A..Z
       # 26..35 map to ASCII 0..9
     end
-  
+
     # Bias adaptation function
     def adapt(delta, numpoints, firsttime)
       delta = firsttime ? (delta / DAMP) : (delta >> 1)
@@ -64,7 +64,7 @@ module SimpleIDN
       end
       return k + (BASE - TMIN + 1) * delta / (delta + SKEW)
     end
-  
+
     # encode_basic(bcp,flag) forces a basic code point to lowercase if flag is zero,
     # uppercase if flag is nonzero, and returns the resulting code point.
     # The code point is unchanged if it is caseless.
@@ -73,17 +73,17 @@ module SimpleIDN
       bcp -= (bcp - 97 < 26 ? 1 : 0) << 5
       return bcp + ((!flag && (bcp - 65 < 26 ? 1 : 0)) << 5)
     end
-  
+
     # Main decode
     def decode(input)
       output = []
 
-      # Initialize the state: 
+      # Initialize the state:
       n = INITIAL_N
       i = 0
       bias = INITIAL_BIAS
 
-      # Handle the basic code points: Let basic be the number of input code 
+      # Handle the basic code points: Let basic be the number of input code
       # points before the last delimiter, or 0 if there is none, then
       # copy the first basic code points to the output.
       basic = input.rindex(DELIMITER.to_utf8_character) || 0
@@ -94,7 +94,7 @@ module SimpleIDN
       end
 
       # Main decoding loop: Start just after the last delimiter if any
-      # basic code points were copied; start at the beginning otherwise. 
+      # basic code points were copied; start at the beginning otherwise.
 
       ic = basic > 0 ? basic + 1 : 0
       while ic < input.length do
@@ -102,7 +102,7 @@ module SimpleIDN
 
         # Decode a generalized variable-length integer into delta,
         # which gets added to i. The overflow checking is easier
-        # if we increase i as we go, then subtract off its starting 
+        # if we increase i as we go, then subtract off its starting
         # value at the end to obtain delta.
         oldi = i
         w = 1
@@ -114,14 +114,14 @@ module SimpleIDN
           ic += 1
 
           raise(RangeError, "punycode_bad_input(2)") if digit >= BASE
-        
+
           raise(RangeError, "punycode_overflow(1)") if digit > (MAXINT - i) / w
 
           i += digit * w
           t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
           break if digit < t
           raise(RangeError, "punycode_overflow(2)") if w > MAXINT / (BASE - t)
-        
+
           w *= BASE - t
           k += BASE
         end
@@ -130,17 +130,17 @@ module SimpleIDN
         bias = adapt(i - oldi, out, oldi == 0)
 
         # i was supposed to wrap around from out to 0,
-        # incrementing n each time, so we'll fix that now: 
+        # incrementing n each time, so we'll fix that now:
         raise(RangeError, "punycode_overflow(3)") if (i / out) > MAXINT - n
 
         n += (i / out)
         i %= out
 
-        # Insert n at position i of the output: 
+        # Insert n at position i of the output:
         output.insert(i, n.to_utf8_character)
         i += 1
       end
-    
+
       return output.join
     end
 
@@ -150,36 +150,36 @@ module SimpleIDN
       input = input.downcase.unpack("U*")
       output = []
 
-      # Initialize the state: 
+      # Initialize the state:
       n = INITIAL_N
       delta = 0
       bias = INITIAL_BIAS
 
-      # Handle the basic code points: 
+      # Handle the basic code points:
       output = input.select do |char|
         char if char < 0x80
       end
-    
+
       h = b = output.length
 
       # h is the number of code points that have been handled, b is the
-      # number of basic code points 
+      # number of basic code points
 
       output << DELIMITER if b > 0
 
       # Main encoding loop:
       while h < input.length do
         # All non-basic code points < n have been
-        # handled already. Find the next larger one: 
+        # handled already. Find the next larger one:
 
         m = MAXINT
-        
+
         input.each do |char|
           m = char if char >= n && char < m
         end
 
         # Increase delta enough to advance the decoder's
-        # <n,i> state to <m,0>, but guard against overflow: 
+        # <n,i> state to <m,0>, but guard against overflow:
 
         raise(RangeError, "punycode_overflow (1)") if m - n > ((MAXINT - delta) / (h + 1)).floor
 
@@ -193,7 +193,7 @@ module SimpleIDN
           end
 
           if (char == n)
-              # Represent delta as a generalized variable-length integer: 
+              # Represent delta as a generalized variable-length integer:
               q = delta
               k = BASE
               while true do
@@ -217,13 +217,13 @@ module SimpleIDN
     end
 
   end
-  
+
   module_function
-  
+
   # Converts a UTF-8 unicode string to a punycode ACE string.
   # == Example
   #   SimpleIDN.to_ascii("møllerriis.com")
-  #    => "xn--mllerriis-l8a.com" 
+  #    => "xn--mllerriis-l8a.com"
   def to_ascii(domain)
     domain_array = domain.split(".") rescue []
     return domain if domain_array.length == 0
@@ -240,7 +240,7 @@ module SimpleIDN
   # Converts a punycode ACE string to a UTF-8 unicode string.
   # == Example
   #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
-  #    => "møllerriis.com" 
+  #    => "møllerriis.com"
   def to_unicode(domain)
     domain_array = domain.split(".") rescue []
     return domain if domain_array.length == 0
