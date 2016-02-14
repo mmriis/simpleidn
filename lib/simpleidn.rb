@@ -17,7 +17,9 @@ class Integer
 end
 
 module SimpleIDN
-    
+
+  VERSION = "0.0.5"
+
   module Punycode
     
     INITIAL_N = 0x80

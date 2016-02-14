@@ -1,6 +1,4 @@
-# encoding: utf-8
-require 'rspec'
-require 'simpleidn'
+require 'spec_helper'
 require 'test_vectors'
   
 describe "SimpleIDN" do
