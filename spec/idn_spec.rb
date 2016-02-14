@@ -25,6 +25,10 @@ describe "SimpleIDN" do
       # https://github.com/mmriis/simpleidn/issues/3
       SimpleIDN.to_unicode('.').should == '.'
     end
+
+    it "raises when the input is an invalid ACE" do
+      expect { SimpleIDN.to_unicode('xn---') }.to raise_error(SimpleIDN::ConversionError)
+    end
   end
 
   describe "to_ascii" do
