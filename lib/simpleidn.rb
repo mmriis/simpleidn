@@ -20,6 +20,11 @@ module SimpleIDN
 
   VERSION = "0.0.5"
 
+  # The ConversionError is raised when an error occurs during a
+  # Punycode <-> Unicode conversion.
+  class ConversionError < StandardError
+  end
+
   module Punycode
 
     INITIAL_N = 0x80
@@ -89,7 +94,7 @@ module SimpleIDN
       basic = input.rindex(DELIMITER.to_utf8_character) || 0
 
       input.unpack("U*")[0, basic].each do |char|
-        raise(RangeError, "Illegal input >= 0x80") if char >= 0x80
+        raise(ConversionError, "Illegal input >= 0x80") if char >= 0x80
         output << char.chr # to_utf8_character not needed her because ord < 0x80 (128) which is within US-ASCII.
       end
 
@@ -108,19 +113,19 @@ module SimpleIDN
         w = 1
         k = BASE
         while true do
-          raise(RangeError, "punycode_bad_input(1)") if ic >= input.length
+          raise(ConversionError, "punycode_bad_input(1)") if ic >= input.length
 
           digit = decode_digit(input[ic].ord)
           ic += 1
 
-          raise(RangeError, "punycode_bad_input(2)") if digit >= BASE
+          raise(ConversionError, "punycode_bad_input(2)") if digit >= BASE
 
-          raise(RangeError, "punycode_overflow(1)") if digit > (MAXINT - i) / w
+          raise(ConversionError, "punycode_overflow(1)") if digit > (MAXINT - i) / w
 
           i += digit * w
           t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
           break if digit < t
-          raise(RangeError, "punycode_overflow(2)") if w > MAXINT / (BASE - t)
+          raise(ConversionError, "punycode_overflow(2)") if w > MAXINT / (BASE - t)
 
           w *= BASE - t
           k += BASE
@@ -131,7 +136,7 @@ module SimpleIDN
 
         # i was supposed to wrap around from out to 0,
         # incrementing n each time, so we'll fix that now:
-        raise(RangeError, "punycode_overflow(3)") if (i / out) > MAXINT - n
+        raise(ConversionError, "punycode_overflow(3)") if (i / out) > MAXINT - n
 
         n += (i / out)
         i %= out
@@ -146,7 +151,6 @@ module SimpleIDN
 
     # Main encode function
     def encode(input)
-
       input = input.downcase.unpack("U*")
       output = []
 
@@ -181,7 +185,7 @@ module SimpleIDN
         # Increase delta enough to advance the decoder's
         # <n,i> state to <m,0>, but guard against overflow:
 
-        raise(RangeError, "punycode_overflow (1)") if m - n > ((MAXINT - delta) / (h + 1)).floor
+        raise(ConversionError, "punycode_overflow (1)") if m - n > ((MAXINT - delta) / (h + 1)).floor
 
         delta += (m - n) * (h + 1)
         n = m
@@ -189,7 +193,7 @@ module SimpleIDN
         input.each_with_index do |char, j|
           if char < n
             delta += 1
-            raise(StandardError,"punycode_overflow(2)") if delta > MAXINT
+            raise(ConversionError, "punycode_overflow(2)") if delta > MAXINT
           end
 
           if (char == n)
