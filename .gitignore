@@ -1,5 +1,9 @@
-spec/*.yml
+# Bundler
+.bundle
+pkg/*
+Gemfile.lock
+
 .rvmrc
-doc
-pkg
 .rbenv-version
+doc
+spec/*.yml
