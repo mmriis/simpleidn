@@ -22,7 +22,7 @@ module SimpleIDN
 
   # The ConversionError is raised when an error occurs during a
   # Punycode <-> Unicode conversion.
-  class ConversionError < StandardError
+  class ConversionError < RangeError
   end
 
   module Punycode
