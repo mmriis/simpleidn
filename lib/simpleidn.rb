@@ -18,7 +18,7 @@ end
 
 module SimpleIDN
 
-  VERSION = "0.0.6"
+  VERSION = "0.0.7"
 
   # The ConversionError is raised when an error occurs during a
   # Punycode <-> Unicode conversion.
@@ -151,7 +151,7 @@ module SimpleIDN
 
     # Main encode function
     def encode(input)
-      input = input.downcase.unpack("U*")
+      input = input.unpack("U*")
       output = []
 
       # Initialize the state:
@@ -235,7 +235,7 @@ module SimpleIDN
     i = 0
     while i < domain_array.length
       s = domain_array[i]
-      out << (s =~ /[^A-Z0-9\-*_]/i ? "xn--" + Punycode.encode(s) : s)
+      out << (s =~ /[^A-Z0-9@\-*_]/i ? "xn--" + Punycode.encode(s) : s)
       i += 1
     end
     return out.join(".")

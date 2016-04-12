@@ -34,4 +34,6 @@ http://www.gnu.org/software/libidn/draft-josefsson-idn-test-vectors.html
 
 == Known issues
 
-None at the moment, but please report any issues!
+Does not preserve uppercase. So if, for some reason, you use uppercase characters (eg. Ø instead of ø), please take note of that.
+
+Please report any issues!

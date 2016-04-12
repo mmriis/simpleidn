@@ -35,12 +35,16 @@ describe "SimpleIDN" do
   describe "to_ascii" do
     it "should pass all test cases" do
       TESTCASES_JOSEFSSON.sort.each do |testcase, vector|
-        expect(SimpleIDN.to_ascii(vector[0])).to eq(vector[1].downcase)
+        expect(SimpleIDN.to_ascii(vector[0])).to eq(vector[1])
       end
     end
 
     it "should respect * and not try to encode it" do
       expect(SimpleIDN.to_ascii("*.hello.com")).to eq("*.hello.com")
+    end
+    
+    it "should respect @ and not try to encode it" do
+      expect(SimpleIDN.to_ascii("@.hello.com")).to eq("@.hello.com")
     end
 
     it "should respect leading _ and not try to encode it" do
@@ -55,5 +59,6 @@ describe "SimpleIDN" do
       # https://github.com/mmriis/simpleidn/issues/3
       expect(SimpleIDN.to_ascii('.')).to eq('.')
     end
+    
   end
 end
