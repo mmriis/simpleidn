@@ -1,21 +1,4 @@
 # encoding: UTF-8
-if RUBY_VERSION =~ /^1\.8/
-  $KCODE = "UTF-8"
-  class String
-    def ord
-      self[0]
-    end
-  end
-else
-  Encoding.default_internal = "UTF-8"
-end
-
-class Integer
-  def to_utf8_character
-    [self].pack("U*")
-  end
-end
-
 module SimpleIDN
   VERSION = "0.0.7"
 
@@ -36,6 +19,8 @@ module SimpleIDN
     MAXINT = 0x7FFFFFFF
     ASCII_MAX = 0x7F
 
+    EMPTY = ''.encode(Encoding::UTF_8).freeze
+
     module_function
 
     # decode_digit(cp) returns the numeric value of a basic code
@@ -45,7 +30,7 @@ module SimpleIDN
       cp - 48 < 10 ? cp - 22 : cp - 65 < 26 ? cp - 65 : cp - 97 < 26 ? cp - 97 : BASE
     end
 
-    # encode_digit(d,flag) returns the basic code point whose value
+    # encode_digit(d) returns the basic code point whose value
     # (when used for representing integers) is d, which needs to be in
     # the range 0 to base-1.
     def encode_digit(d)
@@ -69,6 +54,8 @@ module SimpleIDN
 
     # Main decode
     def decode(input)
+      input_encoding = input.encoding
+      input = input.encode(Encoding::UTF_8).codepoints.to_a
       output = []
 
       # Initialize the state:
@@ -79,11 +66,11 @@ module SimpleIDN
       # Handle the basic code points: Let basic be the number of input code
       # points before the last delimiter, or 0 if there is none, then
       # copy the first basic code points to the output.
-      basic = input.rindex(DELIMITER.to_utf8_character) || 0
+      basic = input.rindex(DELIMITER) || 0
 
-      input.unpack("U*")[0, basic].each do |char|
+      input[0, basic].each do |char|
         raise(ConversionError, "Illegal input >= 0x80") if char > ASCII_MAX
-        output << char.chr # to_utf8_character not needed her because ord < 0x80 (128) which is within US-ASCII.
+        output << char.chr(Encoding::UTF_8)
       end
 
       # Main decoding loop: Start just after the last delimiter if any
@@ -103,7 +90,7 @@ module SimpleIDN
         loop do
           raise(ConversionError, "punycode_bad_input(1)") if ic >= input.length
 
-          digit = decode_digit(input[ic].ord)
+          digit = decode_digit(input[ic])
           ic += 1
 
           raise(ConversionError, "punycode_bad_input(2)") if digit >= BASE
@@ -130,16 +117,17 @@ module SimpleIDN
         i %= out
 
         # Insert n at position i of the output:
-        output.insert(i, n.to_utf8_character)
+        output.insert(i, n.chr(Encoding::UTF_8))
         i += 1
       end
 
-      output.join
+      output.join(EMPTY).encode(input_encoding)
     end
 
     # Main encode function
     def encode(input)
-      input = input.unpack("U*")
+      input_encoding = input.encoding
+      input = input.encode(Encoding::UTF_8).codepoints.to_a
       output = []
 
       # Initialize the state:
@@ -202,7 +190,7 @@ module SimpleIDN
         delta += 1
         n += 1
       end
-      output.collect {|c| c.to_utf8_character}.join
+      output.collect {|c| c.chr(Encoding::UTF_8)}.join(EMPTY).encode(input_encoding)
     end
   end
 
@@ -231,7 +219,7 @@ module SimpleIDN
   #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
   #    => "møllerriis.com"
   def to_unicode(domain)
-    domain_array = domain.split(LABEL_SEPARATOR_RE) rescue []
+    domain_array = domain.split(LABEL_SEPERATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
     domain_array.each do |s|
