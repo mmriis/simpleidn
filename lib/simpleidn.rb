@@ -195,8 +195,9 @@ module SimpleIDN
     end
   end
 
-  ACE_PREFIX = 'xn--'
-  DOT = '.'
+  ACE_PREFIX = 'xn--'.encode(Encoding::UTF_8).freeze
+  ASCII_MAX = 0x7E
+  DOT = '.'.encode(Encoding::UTF_8).freeze
   LABEL_SEPERATOR_RE = /[.]/
 
   module_function
@@ -206,13 +207,15 @@ module SimpleIDN
   #   SimpleIDN.to_ascii("møllerriis.com")
   #    => "xn--mllerriis-l8a.com"
   def to_ascii(domain)
-    domain_array = domain.split(LABEL_SEPERATOR_RE) rescue []
+    return nil if domain.nil?
+    edomain = domain.encode(Encoding::UTF_8)
+    domain_array = edomain.split(LABEL_SEPERATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
     domain_array.each do |s|
-      out << (s =~ /[^A-Z0-9@\-*_]/i ? ACE_PREFIX + Punycode.encode(s) : s)
+      out << (s.codepoints.any? { |cp| cp > ASCII_MAX } ? ACE_PREFIX + Punycode.encode(s) : s)
     end
-    out.join(DOT)
+    out.join(DOT).encode(domain.encoding)
   end
 
   # Converts a punycode ACE string to a UTF-8 unicode string.
@@ -220,12 +223,14 @@ module SimpleIDN
   #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
   #    => "møllerriis.com"
   def to_unicode(domain)
-    domain_array = domain.split(LABEL_SEPERATOR_RE) rescue []
+    return nil if domain.nil?
+    edomain = domain.encode(Encoding::UTF_8)
+    domain_array = edomain.split(LABEL_SEPERATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
     domain_array.each do |s|
       out << (s.downcase.start_with?(ACE_PREFIX) ? Punycode.decode(s[ACE_PREFIX.length..-1]) : s)
     end
-    out.join(DOT)
+    out.join(DOT).encode(domain.encoding)
   end
 end
