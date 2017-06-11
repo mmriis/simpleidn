@@ -233,7 +233,7 @@ module SimpleIDN
     return domain if domain_array.length == 0
     out = []
     domain_array.each do |s|
-      out << (s =~ /^xn\-\-/i ? Punycode.decode(s.gsub('xn--','')) : s)
+      out << (s =~ /^xn\-\-/i ? Punycode.decode(s[4..-1]) : s)
     end
     out.join(".")
   end
