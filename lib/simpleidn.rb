@@ -181,7 +181,7 @@ module SimpleIDN
             raise(ConversionError, "punycode_overflow(2)") if delta > MAXINT
           end
 
-          if (char == n)
+          next unless char == n
               # Represent delta as a generalized variable-length integer:
               q = delta
               k = BASE
@@ -196,7 +196,6 @@ module SimpleIDN
               bias = adapt(delta, h + 1, h == b)
               delta = 0
               h += 1
-          end
         end
 
         delta += 1
