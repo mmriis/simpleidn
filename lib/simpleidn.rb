@@ -46,12 +46,10 @@ module SimpleIDN
 
     # encode_digit(d,flag) returns the basic code point whose value
     # (when used for representing integers) is d, which needs to be in
-    # the range 0 to base-1. The lowercase form is used unless flag is
-    # nonzero, in which case the uppercase form is used. The behavior
-    # is undefined if flag is nonzero and digit d has no uppercase form.
+    # the range 0 to base-1.
     def encode_digit(d)
       d + 22 + 75 * (d < 26 ? 1 : 0)
-      #  0..25 map to ASCII a..z or A..Z
+      #  0..25 map to ASCII a..z
       # 26..35 map to ASCII 0..9
     end
 
