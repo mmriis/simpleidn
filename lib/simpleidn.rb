@@ -70,15 +70,6 @@ module SimpleIDN
       return k + (BASE - TMIN + 1) * delta / (delta + SKEW)
     end
 
-    # encode_basic(bcp,flag) forces a basic code point to lowercase if flag is zero,
-    # uppercase if flag is nonzero, and returns the resulting code point.
-    # The code point is unchanged if it is caseless.
-    # The behavior is undefined if bcp is not a basic code point.
-    def encode_basic(bcp, flag)
-      bcp -= (bcp - 97 < 26 ? 1 : 0) << 5
-      return bcp + ((!flag && (bcp - 65 < 26 ? 1 : 0)) << 5)
-    end
-
     # Main decode
     def decode(input)
       output = []
