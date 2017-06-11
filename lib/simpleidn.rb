@@ -208,8 +208,7 @@ module SimpleIDN
   #    => "xn--mllerriis-l8a.com"
   def to_ascii(domain)
     return nil if domain.nil?
-    edomain = domain.encode(Encoding::UTF_8)
-    domain_array = edomain.split(LABEL_SEPERATOR_RE) rescue []
+    domain_array = domain.encode(Encoding::UTF_8).split(LABEL_SEPERATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
     domain_array.each do |s|
@@ -224,8 +223,7 @@ module SimpleIDN
   #    => "møllerriis.com"
   def to_unicode(domain)
     return nil if domain.nil?
-    edomain = domain.encode(Encoding::UTF_8)
-    domain_array = edomain.split(LABEL_SEPERATOR_RE) rescue []
+    domain_array = domain.encode(Encoding::UTF_8).split(LABEL_SEPERATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
     domain_array.each do |s|
