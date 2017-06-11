@@ -171,6 +171,7 @@ module SimpleIDN
           end
 
           next unless char == n
+
           # Represent delta as a generalized variable-length integer:
           q = delta
           k = BASE
@@ -178,7 +179,7 @@ module SimpleIDN
             t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
             break if q < t
             output << encode_digit(t + (q - t) % (BASE - t))
-            q = ( (q - t) / (BASE - t) ).floor
+            q = ((q - t) / (BASE - t)).floor
             k += BASE
           end
           output << encode_digit(q)
@@ -194,11 +195,11 @@ module SimpleIDN
     end
   end
 
-  module_function
-
   ACE_PREFIX = 'xn--'
   DOT = '.'
   LABEL_SEPERATOR_RE = /[.]/
+
+  module_function
 
   # Converts a UTF-8 unicode string to a punycode ACE string.
   # == Example
