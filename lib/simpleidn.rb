@@ -17,7 +17,6 @@ class Integer
 end
 
 module SimpleIDN
-
   VERSION = "0.0.7"
 
   # The ConversionError is raised when an error occurs during a
@@ -26,7 +25,6 @@ module SimpleIDN
   end
 
   module Punycode
-
     INITIAL_N = 0x80
     INITIAL_BIAS = 72
     DELIMITER = 0x2D
@@ -63,11 +61,11 @@ module SimpleIDN
       delta += (delta / numpoints)
 
       k = 0
-      while delta > (((BASE - TMIN) * TMAX) / 2) do
+      while delta > (((BASE - TMIN) * TMAX) / 2)
         delta /= BASE - TMIN
         k += BASE
       end
-      return k + (BASE - TMIN + 1) * delta / (delta + SKEW)
+      k + (BASE - TMIN + 1) * delta / (delta + SKEW)
     end
 
     # Main decode
@@ -93,7 +91,7 @@ module SimpleIDN
       # basic code points were copied; start at the beginning otherwise.
 
       ic = basic > 0 ? basic + 1 : 0
-      while ic < input.length do
+      while ic < input.length
         # ic is the index of the next character to be consumed,
 
         # Decode a generalized variable-length integer into delta,
@@ -103,7 +101,7 @@ module SimpleIDN
         oldi = i
         w = 1
         k = BASE
-        while true do
+        loop do
           raise(ConversionError, "punycode_bad_input(1)") if ic >= input.length
 
           digit = decode_digit(input[ic].ord)
@@ -137,7 +135,7 @@ module SimpleIDN
         i += 1
       end
 
-      return output.join
+      output.join
     end
 
     # Main encode function
@@ -151,9 +149,7 @@ module SimpleIDN
       bias = INITIAL_BIAS
 
       # Handle the basic code points:
-      output = input.select do |char|
-        char if char < 0x80
-      end
+      output = input.select { |char| char < 0x80 }
 
       h = b = output.length
 
@@ -163,7 +159,7 @@ module SimpleIDN
       output << DELIMITER if b > 0
 
       # Main encoding loop:
-      while h < input.length do
+      while h < input.length
         # All non-basic code points < n have been
         # handled already. Find the next larger one:
 
@@ -181,7 +177,7 @@ module SimpleIDN
         delta += (m - n) * (h + 1)
         n = m
 
-        input.each_with_index do |char, j|
+        input.each_with_index do |char, _|
           if char < n
             delta += 1
             raise(ConversionError, "punycode_overflow(2)") if delta > MAXINT
@@ -191,7 +187,7 @@ module SimpleIDN
               # Represent delta as a generalized variable-length integer:
               q = delta
               k = BASE
-              while true do
+              loop do
                   t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
                   break if q < t
                   output << encode_digit(t + (q - t) % (BASE - t))
@@ -208,9 +204,8 @@ module SimpleIDN
         delta += 1
         n += 1
       end
-      return output.collect {|c| c.to_utf8_character}.join
+      output.collect {|c| c.to_utf8_character}.join
     end
-
   end
 
   module_function
@@ -223,13 +218,10 @@ module SimpleIDN
     domain_array = domain.split(".") rescue []
     return domain if domain_array.length == 0
     out = []
-    i = 0
-    while i < domain_array.length
-      s = domain_array[i]
+    domain_array.each do |s|
       out << (s =~ /[^A-Z0-9@\-*_]/i ? "xn--" + Punycode.encode(s) : s)
-      i += 1
     end
-    return out.join(".")
+    out.join(".")
   end
 
   # Converts a punycode ACE string to a UTF-8 unicode string.
@@ -240,12 +232,9 @@ module SimpleIDN
     domain_array = domain.split(".") rescue []
     return domain if domain_array.length == 0
     out = []
-    i = 0
-    while i < domain_array.length
-      s = domain_array[i]
+    domain_array.each do |s|
       out << (s =~ /^xn\-\-/i ? Punycode.decode(s.gsub('xn--','')) : s)
-      i += 1
     end
-    return out.join(".")
+    out.join(".")
   end
 end
