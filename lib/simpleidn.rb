@@ -208,18 +208,22 @@ module SimpleIDN
 
   module_function
 
+  ACE_PREFIX = 'xn--'
+  DOT = '.'
+  LABEL_SEPERATOR_RE = /[.]/
+
   # Converts a UTF-8 unicode string to a punycode ACE string.
   # == Example
   #   SimpleIDN.to_ascii("møllerriis.com")
   #    => "xn--mllerriis-l8a.com"
   def to_ascii(domain)
-    domain_array = domain.split(".") rescue []
+    domain_array = domain.split(LABEL_SEPERATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
     domain_array.each do |s|
-      out << (s =~ /[^A-Z0-9@\-*_]/i ? "xn--" + Punycode.encode(s) : s)
+      out << (s =~ /[^A-Z0-9@\-*_]/i ? ACE_PREFIX + Punycode.encode(s) : s)
     end
-    out.join(".")
+    out.join(DOT)
   end
 
   # Converts a punycode ACE string to a UTF-8 unicode string.
@@ -227,12 +231,12 @@ module SimpleIDN
   #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
   #    => "møllerriis.com"
   def to_unicode(domain)
-    domain_array = domain.split(".") rescue []
+    domain_array = domain.split(LABEL_SEPARATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
     domain_array.each do |s|
-      out << (s =~ /^xn\-\-/i ? Punycode.decode(s[4..-1]) : s)
+      out << (s.downcase.start_with?(ACE_PREFIX) ? Punycode.decode(s[ACE_PREFIX.length..-1]) : s)
     end
-    out.join(".")
+    out.join(DOT)
   end
 end
