@@ -34,6 +34,7 @@ module SimpleIDN
     TMAX = 26
     SKEW = 38
     MAXINT = 0x7FFFFFFF
+    ASCII_MAX = 0x7F
 
     module_function
 
@@ -81,7 +82,7 @@ module SimpleIDN
       basic = input.rindex(DELIMITER.to_utf8_character) || 0
 
       input.unpack("U*")[0, basic].each do |char|
-        raise(ConversionError, "Illegal input >= 0x80") if char >= 0x80
+        raise(ConversionError, "Illegal input >= 0x80") if char > ASCII_MAX
         output << char.chr # to_utf8_character not needed her because ord < 0x80 (128) which is within US-ASCII.
       end
 
@@ -147,7 +148,7 @@ module SimpleIDN
       bias = INITIAL_BIAS
 
       # Handle the basic code points:
-      output = input.select { |char| char < 0x80 }
+      output = input.select { |char| char <= ASCII_MAX }
 
       h = b = output.length
 
@@ -182,20 +183,20 @@ module SimpleIDN
           end
 
           next unless char == n
-              # Represent delta as a generalized variable-length integer:
-              q = delta
-              k = BASE
-              loop do
-                  t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
-                  break if q < t
-                  output << encode_digit(t + (q - t) % (BASE - t))
-                  q = ( (q - t) / (BASE - t) ).floor
-                  k += BASE
-              end
-              output << encode_digit(q)
-              bias = adapt(delta, h + 1, h == b)
-              delta = 0
-              h += 1
+          # Represent delta as a generalized variable-length integer:
+          q = delta
+          k = BASE
+          loop do
+            t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
+            break if q < t
+            output << encode_digit(t + (q - t) % (BASE - t))
+            q = ( (q - t) / (BASE - t) ).floor
+            k += BASE
+          end
+          output << encode_digit(q)
+          bias = adapt(delta, h + 1, h == b)
+          delta = 0
+          h += 1
         end
 
         delta += 1
