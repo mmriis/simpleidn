@@ -196,7 +196,7 @@ module SimpleIDN
   end
 
   ACE_PREFIX = 'xn--'.encode(Encoding::UTF_8).freeze
-  ASCII_MAX = 0x7E
+  ASCII_MAX = 0x7F
   DOT = '.'.encode(Encoding::UTF_8).freeze
   LABEL_SEPERATOR_RE = /[.]/
 
