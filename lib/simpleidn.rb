@@ -70,7 +70,7 @@ module SimpleIDN
 
       input[0, basic].each do |char|
         raise(ConversionError, "Illegal input >= 0x80") if char > ASCII_MAX
-        output << char.chr(Encoding::UTF_8)
+        output << char
       end
 
       # Main decoding loop: Start just after the last delimiter if any
@@ -117,11 +117,11 @@ module SimpleIDN
         i %= out
 
         # Insert n at position i of the output:
-        output.insert(i, n.chr(Encoding::UTF_8))
+        output.insert(i, n)
         i += 1
       end
 
-      output.join(EMPTY).encode(input_encoding)
+      output.collect {|c| c.chr(Encoding::UTF_8)}.join(EMPTY).encode(input_encoding)
     end
 
     # Main encode function
