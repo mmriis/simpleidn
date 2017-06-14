@@ -18,13 +18,13 @@ In your Ruby script you can now.
 
   require 'rubygems'
   require 'simpleidn'
-  
+
   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
-  => "møllerriis.com" 
-  
+  => "møllerriis.com"
+
 	SimpleIDN.to_ascii("møllerriis.com")
-  => "xn--mllerriis-l8a.com" 
-  
+  => "xn--mllerriis-l8a.com"
+
 == Testing / RSpec
 
 In order to run the test suite you must have <tt>rspec</tt> installed.
