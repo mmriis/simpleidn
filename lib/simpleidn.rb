@@ -1,5 +1,5 @@
 module SimpleIDN
-  VERSION = "0.0.8"
+  VERSION = "0.0.9"
 
   # The ConversionError is raised when an error occurs during a
   # Punycode <-> Unicode conversion.
