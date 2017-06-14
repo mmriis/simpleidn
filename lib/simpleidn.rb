@@ -1,23 +1,5 @@
 # encoding: UTF-8
-if RUBY_VERSION =~ /^1\.8/
-  $KCODE = "UTF-8"
-  class String
-    def ord
-      self[0]
-    end
-  end
-else
-  Encoding.default_internal = "UTF-8"
-end
-
-class Integer
-  def to_utf8_character
-    [self].pack("U*")
-  end
-end
-
 module SimpleIDN
-
   VERSION = "0.0.7"
 
   # The ConversionError is raised when an error occurs during a
@@ -26,7 +8,6 @@ module SimpleIDN
   end
 
   module Punycode
-
     INITIAL_N = 0x80
     INITIAL_BIAS = 72
     DELIMITER = 0x2D
@@ -36,6 +17,9 @@ module SimpleIDN
     TMAX = 26
     SKEW = 38
     MAXINT = 0x7FFFFFFF
+    ASCII_MAX = 0x7F
+
+    EMPTY = ''.encode(Encoding::UTF_8).freeze
 
     module_function
 
@@ -46,14 +30,12 @@ module SimpleIDN
       cp - 48 < 10 ? cp - 22 : cp - 65 < 26 ? cp - 65 : cp - 97 < 26 ? cp - 97 : BASE
     end
 
-    # encode_digit(d,flag) returns the basic code point whose value
+    # encode_digit(d) returns the basic code point whose value
     # (when used for representing integers) is d, which needs to be in
-    # the range 0 to base-1. The lowercase form is used unless flag is
-    # nonzero, in which case the uppercase form is used. The behavior
-    # is undefined if flag is nonzero and digit d has no uppercase form.
+    # the range 0 to base-1.
     def encode_digit(d)
       d + 22 + 75 * (d < 26 ? 1 : 0)
-      #  0..25 map to ASCII a..z or A..Z
+      #  0..25 map to ASCII a..z
       # 26..35 map to ASCII 0..9
     end
 
@@ -63,24 +45,17 @@ module SimpleIDN
       delta += (delta / numpoints)
 
       k = 0
-      while delta > (((BASE - TMIN) * TMAX) / 2) do
+      while delta > (((BASE - TMIN) * TMAX) / 2)
         delta /= BASE - TMIN
         k += BASE
       end
-      return k + (BASE - TMIN + 1) * delta / (delta + SKEW)
-    end
-
-    # encode_basic(bcp,flag) forces a basic code point to lowercase if flag is zero,
-    # uppercase if flag is nonzero, and returns the resulting code point.
-    # The code point is unchanged if it is caseless.
-    # The behavior is undefined if bcp is not a basic code point.
-    def encode_basic(bcp, flag)
-      bcp -= (bcp - 97 < 26 ? 1 : 0) << 5
-      return bcp + ((!flag && (bcp - 65 < 26 ? 1 : 0)) << 5)
+      k + (BASE - TMIN + 1) * delta / (delta + SKEW)
     end
 
     # Main decode
     def decode(input)
+      input_encoding = input.encoding
+      input = input.encode(Encoding::UTF_8).codepoints.to_a
       output = []
 
       # Initialize the state:
@@ -91,18 +66,18 @@ module SimpleIDN
       # Handle the basic code points: Let basic be the number of input code
       # points before the last delimiter, or 0 if there is none, then
       # copy the first basic code points to the output.
-      basic = input.rindex(DELIMITER.to_utf8_character) || 0
+      basic = input.rindex(DELIMITER) || 0
 
-      input.unpack("U*")[0, basic].each do |char|
-        raise(ConversionError, "Illegal input >= 0x80") if char >= 0x80
-        output << char.chr # to_utf8_character not needed her because ord < 0x80 (128) which is within US-ASCII.
+      input[0, basic].each do |char|
+        raise(ConversionError, "Illegal input >= 0x80") if char > ASCII_MAX
+        output << char
       end
 
       # Main decoding loop: Start just after the last delimiter if any
       # basic code points were copied; start at the beginning otherwise.
 
       ic = basic > 0 ? basic + 1 : 0
-      while ic < input.length do
+      while ic < input.length
         # ic is the index of the next character to be consumed,
 
         # Decode a generalized variable-length integer into delta,
@@ -112,10 +87,10 @@ module SimpleIDN
         oldi = i
         w = 1
         k = BASE
-        while true do
+        loop do
           raise(ConversionError, "punycode_bad_input(1)") if ic >= input.length
 
-          digit = decode_digit(input[ic].ord)
+          digit = decode_digit(input[ic])
           ic += 1
 
           raise(ConversionError, "punycode_bad_input(2)") if digit >= BASE
@@ -142,16 +117,17 @@ module SimpleIDN
         i %= out
 
         # Insert n at position i of the output:
-        output.insert(i, n.to_utf8_character)
+        output.insert(i, n)
         i += 1
       end
 
-      return output.join
+      output.collect {|c| c.chr(Encoding::UTF_8)}.join(EMPTY).encode(input_encoding)
     end
 
     # Main encode function
     def encode(input)
-      input = input.unpack("U*")
+      input_encoding = input.encoding
+      input = input.encode(Encoding::UTF_8).codepoints.to_a
       output = []
 
       # Initialize the state:
@@ -160,9 +136,7 @@ module SimpleIDN
       bias = INITIAL_BIAS
 
       # Handle the basic code points:
-      output = input.select do |char|
-        char if char < 0x80
-      end
+      output = input.select { |char| char <= ASCII_MAX }
 
       h = b = output.length
 
@@ -172,7 +146,7 @@ module SimpleIDN
       output << DELIMITER if b > 0
 
       # Main encoding loop:
-      while h < input.length do
+      while h < input.length
         # All non-basic code points < n have been
         # handled already. Find the next larger one:
 
@@ -190,37 +164,41 @@ module SimpleIDN
         delta += (m - n) * (h + 1)
         n = m
 
-        input.each_with_index do |char, j|
+        input.each_with_index do |char, _|
           if char < n
             delta += 1
             raise(ConversionError, "punycode_overflow(2)") if delta > MAXINT
           end
 
-          if (char == n)
-              # Represent delta as a generalized variable-length integer:
-              q = delta
-              k = BASE
-              while true do
-                  t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
-                  break if q < t
-                  output << encode_digit(t + (q - t) % (BASE - t))
-                  q = ( (q - t) / (BASE - t) ).floor
-                  k += BASE
-              end
-              output << encode_digit(q)
-              bias = adapt(delta, h + 1, h == b)
-              delta = 0
-              h += 1
+          next unless char == n
+
+          # Represent delta as a generalized variable-length integer:
+          q = delta
+          k = BASE
+          loop do
+            t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
+            break if q < t
+            output << encode_digit(t + (q - t) % (BASE - t))
+            q = ((q - t) / (BASE - t)).floor
+            k += BASE
           end
+          output << encode_digit(q)
+          bias = adapt(delta, h + 1, h == b)
+          delta = 0
+          h += 1
         end
 
         delta += 1
         n += 1
       end
-      return output.collect {|c| c.to_utf8_character}.join
+      output.collect {|c| c.chr(Encoding::UTF_8)}.join(EMPTY).encode(input_encoding)
     end
-
   end
+
+  ACE_PREFIX = 'xn--'.encode(Encoding::UTF_8).freeze
+  ASCII_MAX = 0x7F
+  DOT = 0x2E.chr(Encoding::UTF_8).freeze
+  LABEL_SEPERATOR_RE = /[\u002e]/
 
   module_function
 
@@ -229,16 +207,14 @@ module SimpleIDN
   #   SimpleIDN.to_ascii("møllerriis.com")
   #    => "xn--mllerriis-l8a.com"
   def to_ascii(domain)
-    domain_array = domain.split(".") rescue []
+    return nil if domain.nil?
+    domain_array = domain.encode(Encoding::UTF_8).split(LABEL_SEPERATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
-    i = 0
-    while i < domain_array.length
-      s = domain_array[i]
-      out << (s =~ /[^A-Z0-9@\-*_]/i ? "xn--" + Punycode.encode(s) : s)
-      i += 1
+    domain_array.each do |s|
+      out << (s.codepoints.any? { |cp| cp > ASCII_MAX } ? ACE_PREFIX + Punycode.encode(s) : s)
     end
-    return out.join(".")
+    out.join(DOT).encode(domain.encoding)
   end
 
   # Converts a punycode ACE string to a UTF-8 unicode string.
@@ -246,15 +222,13 @@ module SimpleIDN
   #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
   #    => "møllerriis.com"
   def to_unicode(domain)
-    domain_array = domain.split(".") rescue []
+    return nil if domain.nil?
+    domain_array = domain.encode(Encoding::UTF_8).split(LABEL_SEPERATOR_RE) rescue []
     return domain if domain_array.length == 0
     out = []
-    i = 0
-    while i < domain_array.length
-      s = domain_array[i]
-      out << (s =~ /^xn\-\-/i ? Punycode.decode(s.gsub('xn--','')) : s)
-      i += 1
+    domain_array.each do |s|
+      out << (s.downcase.start_with?(ACE_PREFIX) ? Punycode.decode(s[ACE_PREFIX.length..-1]) : s)
     end
-    return out.join(".")
+    out.join(DOT).encode(domain.encoding)
   end
 end
