@@ -1,8 +1,7 @@
 language: ruby
 before_install:
-    - rvm @default,@global do gem uninstall bundler rake rspec -x
+    - rvm @default,@global do gem uninstall bundler rspec -x
     - gem install bundler --version '~> 1.11'
-    - gem install rake --version '~> 10.0'
     - gem install rspec --version '~> 3.0'
     - bundle --version
     - rake --version
