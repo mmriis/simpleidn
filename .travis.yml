@@ -15,4 +15,3 @@ rvm:
     - 2.2
     - jruby
 
-script: 'bundle exec rake'
