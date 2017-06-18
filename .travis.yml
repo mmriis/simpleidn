@@ -14,4 +14,4 @@ rvm:
     - 2.1
     - 2.2
     - jruby
-
+script: 'rspec spec/idn_spec.rb'
