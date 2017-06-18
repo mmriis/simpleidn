@@ -7,3 +7,5 @@ Gemfile.lock
 .rbenv-version
 doc
 spec/*.yml
+
+coverage
