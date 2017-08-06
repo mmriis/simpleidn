@@ -228,6 +228,14 @@ module SimpleIDN
     domain_array.each do |s|
       out << (s.downcase.start_with?(ACE_PREFIX) ? Punycode.decode(s[ACE_PREFIX.length..-1]) : s)
     end
-    out.join(DOT).encode(domain.encoding)
+    out = out.join(DOT)
+    # Try to convert to the input encoding, but don't error on failure
+    # Given that the input is plain 7-bit ASCII only, converting back
+    # frequently fails.  We will try to allow UTF-16 and Unicode encodings
+    begin
+      out.encode!(domain.encoding)
+    rescue Encoding::UndefinedConversionError
+    end
+    out
   end
 end
