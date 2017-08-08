@@ -1,9 +1,6 @@
 source 'https://rubygems.org'
 
-group :test do
-  gem "simplecov"
-end
-
+gem 'simplecov', :require => false, :group => :test
 gem 'codecov', :require => false, :group => :test
 gem 'rspec', :require => false, :group => :test
 
