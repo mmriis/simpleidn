@@ -6,6 +6,7 @@ describe "SimpleIDN" do
   describe "to_unicode" do
     it "should pass all test cases" do
       TESTCASES_JOSEFSSON.sort.each do |testcase, vector|
+        next if vector[2] # Skip non-reversable
         expect(SimpleIDN.to_unicode(vector[1])).to eq(vector[0])
       end
     end
@@ -59,6 +60,40 @@ describe "SimpleIDN" do
       # https://github.com/mmriis/simpleidn/issues/3
       expect(SimpleIDN.to_ascii('.')).to eq('.')
     end
-    
+
+    it "should return @ if @ is given" do
+      expect(SimpleIDN.to_ascii('@')).to eq('@')
+    end
+
+    it "should handle issue 8" do
+      expect(SimpleIDN.to_ascii('verm├Âgensberater')).to eq('xn--vermgensberater-6jb1778m')
+    end
+  end
+
+  describe "uts #46" do
+    it "should pass all test cases" do
+      IO.foreach(File.join(File.dirname(File.expand_path(__FILE__)), 'IdnaTest.txt')) do |line|
+        line = line.split('#').first
+        next if line.nil?
+        parts = line.split(';').map{|p|p.strip}
+        next if parts[1].nil?
+
+        begin
+          parts[1].gsub!(/\\u([0-9a-fA-F]{4})/){|m| $1.to_i(16).chr(Encoding::UTF_8)}
+          parts[2].gsub!(/\\u([0-9a-fA-F]{4})/){|m| $1.to_i(16).chr(Encoding::UTF_8)}
+        rescue RangeError
+          next
+        end
+        parts[2] = parts[1] if parts[2].empty?
+        parts[3] = parts[2] if parts[3].empty?
+        transitional = (parts[0] == 'T')
+        unless parts[2].start_with?('[')
+          expect(SimpleIDN.to_unicode(parts[1])).to eq(parts[2])
+        end
+        unless parts[3].start_with?('[')
+          expect(SimpleIDN.to_ascii(parts[1], transitional)).to eq(parts[3])
+        end
+      end
+    end
   end
 end
