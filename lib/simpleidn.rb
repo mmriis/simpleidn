@@ -1,6 +1,8 @@
-module SimpleIDN
-  VERSION = "0.0.9"
+require 'simpleidn/version'
+require 'simpleidn/uts46mapping'
+require 'unf'
 
+module SimpleIDN
   # The ConversionError is raised when an error occurs during a
   # Punycode <-> Unicode conversion.
   class ConversionError < RangeError
@@ -197,22 +199,54 @@ module SimpleIDN
   ACE_PREFIX = 'xn--'.encode(Encoding::UTF_8).freeze
   ASCII_MAX = 0x7F
   DOT = 0x2E.chr(Encoding::UTF_8).freeze
-  LABEL_SEPERATOR_RE = /[\u002e]/
+  EMPTY = ''.encode(Encoding::UTF_8).freeze
+  LABEL_SEPERATOR_RE = /[\u002e\uff0e\u3002\uff61]/
+
+  unless defined?(UTS64MAPPING)
+    # Define a basic uppercase to lowercase mapping for ASCII a..z
+    UTS64MAPPING = Hash[(65..90).map { |n| [n, n + 32] }].freeze
+  end
+
+  # See UTS46 Table 1
+  TRANSITIONAL = {
+    0x00DF => [0x0073, 0x0073],
+    0x03C2 => 0x03C3,
+    0x200C => [],
+    0x200D => []
+  }.freeze
 
   module_function
+
+  # Applies UTS46 mapping to a Unicode string
+  # Returns a UTF-8 string in Normalization Form C (NFC)
+  def uts46map(str, transitional = false)
+    mapped = str.codepoints.map { |cp| UTS64MAPPING.fetch(cp, cp) }
+    mapped = mapped.map { |cp| TRANSITIONAL.fetch(cp, cp) } if transitional
+    mapped = mapped.flatten.map { |cp| cp.chr(Encoding::UTF_8) }.join(EMPTY)
+    mapped.to_nfc
+  end
 
   # Converts a UTF-8 unicode string to a punycode ACE string.
   # == Example
   #   SimpleIDN.to_ascii("møllerriis.com")
   #    => "xn--mllerriis-l8a.com"
-  def to_ascii(domain)
+  def to_ascii(domain, transitional = false)
     return nil if domain.nil?
-    domain_array = domain.encode(Encoding::UTF_8).split(LABEL_SEPERATOR_RE) rescue []
-    return domain if domain_array.length == 0
+    mapped_domain = uts46map(domain.encode(Encoding::UTF_8), transitional)
+    domain_array = mapped_domain.split(LABEL_SEPERATOR_RE, -1) rescue []
     out = []
+    content = false
     domain_array.each do |s|
+      # Skip leading empty labels
+      next if s.empty? && !content
+      content = true
+
       out << (s.codepoints.any? { |cp| cp > ASCII_MAX } ? ACE_PREFIX + Punycode.encode(s) : s)
     end
+
+    # If all we had were dots; return "."
+    out = [DOT] if out.empty? && !mapped_domain.empty?
+
     out.join(DOT).encode(domain.encoding)
   end
 
@@ -220,14 +254,23 @@ module SimpleIDN
   # == Example
   #   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
   #    => "møllerriis.com"
-  def to_unicode(domain)
+  def to_unicode(domain, transitional = false)
     return nil if domain.nil?
-    domain_array = domain.encode(Encoding::UTF_8).split(LABEL_SEPERATOR_RE) rescue []
-    return domain if domain_array.length == 0
+    mapped_domain = uts46map(domain.encode(Encoding::UTF_8), transitional)
+    domain_array = mapped_domain.split(LABEL_SEPERATOR_RE, -1) rescue []
     out = []
+    content = false
     domain_array.each do |s|
-      out << (s.downcase.start_with?(ACE_PREFIX) ? Punycode.decode(s[ACE_PREFIX.length..-1]) : s)
+      # Skip leading empty labels
+      next if s.empty? && !content
+      content = true
+
+      out << (s.start_with?(ACE_PREFIX) ? Punycode.decode(s[ACE_PREFIX.length..-1]) : s)
     end
+
+    # If all we had were dots; return "."
+    out = [DOT] if out.empty? && !mapped_domain.empty?
+
     out = out.join(DOT)
     # Try to convert to the input encoding, but don't error on failure
     # Given that the input is plain 7-bit ASCII only, converting back
