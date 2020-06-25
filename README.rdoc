@@ -24,7 +24,7 @@ In your Ruby script you can now.
   SimpleIDN.to_unicode("xn--mllerriis-l8a.com")
   => "møllerriis.com"
 
-	SimpleIDN.to_ascii("møllerriis.com")
+  SimpleIDN.to_ascii("møllerriis.com")
   => "xn--mllerriis-l8a.com"
 
 == Testing / RSpec
