@@ -1,14 +1,12 @@
 == SimpleIDN
 
-{<img src="https://travis-ci.org/mmriis/simpleidn.svg?branch=master" alt="Build Status" />}[https://travis-ci.org/mmriis/simpleidn]
+{<img src="https://travis-ci.com/mmriis/simpleidn.svg?branch=master" alt="Build Status" />}[https://travis-ci.com/mmriis/simpleidn]
 
 This gem allows easy conversion from punycode ACE strings to unicode UTF-8 strings and visa versa.
 
 The implementation is heavily based on the RFC3492 C example implementation but simplified since it does not preserve case.
 
-This gem works with Ruby 1.9.3, 2.0, 2.1, 2.2.
-
-* http://www.whatastruggle.com
+This gem works with Ruby 2.2+.
 
 == Installation
 
