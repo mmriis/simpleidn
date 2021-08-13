@@ -8,4 +8,3 @@ rvm:
     - 2.7
     - 3.0
     - jruby
-script: 'bundle exec rspec spec/idn_spec.rb'
