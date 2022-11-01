@@ -1,6 +1,6 @@
 == SimpleIDN
 
-{<img src="https://travis-ci.com/mmriis/simpleidn.svg?branch=master" alt="Build Status" />}[https://travis-ci.com/mmriis/simpleidn]
+{<img src="https://app.travis-ci.com/mmriis/simpleidn.svg?branch=master" alt="Build Status" />}[https://app.travis-ci.com/mmriis/simpleidn]
 
 This gem allows easy conversion from punycode ACE strings to unicode UTF-8 strings and visa versa.
 
