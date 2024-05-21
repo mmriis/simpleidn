@@ -72,26 +72,36 @@ describe "SimpleIDN" do
 
   describe "uts #46" do
     it "should pass all test cases" do
-      IO.foreach(File.join(File.dirname(File.expand_path(__FILE__)), 'IdnaTest.txt')) do |line|
+      IO.foreach(File.join(File.dirname(File.expand_path(__FILE__)), 'IdnaTestV2.txt')) do |line|
         line = line.split('#').first
         next if line.nil?
         parts = line.split(';').map{|p|p.strip}
         next if parts[1].nil?
 
         begin
+          parts[0].gsub!(/\\u([0-9a-fA-F]{4})/){|m| $1.to_i(16).chr(Encoding::UTF_8)}
           parts[1].gsub!(/\\u([0-9a-fA-F]{4})/){|m| $1.to_i(16).chr(Encoding::UTF_8)}
-          parts[2].gsub!(/\\u([0-9a-fA-F]{4})/){|m| $1.to_i(16).chr(Encoding::UTF_8)}
         rescue RangeError
           next
         end
-        parts[2] = parts[1] if parts[2].empty?
-        parts[3] = parts[2] if parts[3].empty?
-        transitional = (parts[0] == 'T')
-        unless parts[2].start_with?('[')
-          expect(SimpleIDN.to_unicode(parts[1])).to eq(parts[2])
+        parts[1] = parts[0] if parts[1].empty?
+        parts[3] = parts[1] if parts[3].empty?
+        parts[5] = parts[3] if parts[5].empty?
+
+        parts[2] = "[]" if parts[2].empty?
+        parts[4] = parts[2] if parts[4].empty?
+        parts[6] = parts[4] if parts[6].empty?
+
+        if parts[2].include?("P4") # The only supported error code for now
+          expect { SimpleIDN.to_unicode(parts[0]) }.to raise_error(SimpleIDN::ConversionError)
+        elsif parts[2] == "[]"
+          expect(SimpleIDN.to_unicode(parts[0])).to eq(parts[1])
         end
-        unless parts[3].start_with?('[')
-          expect(SimpleIDN.to_ascii(parts[1], transitional)).to eq(parts[3])
+        if parts[4] == "[]"
+          expect(SimpleIDN.to_ascii(parts[0], false)).to eq(parts[3])
+        end
+        if parts[6] == "[]"
+          expect(SimpleIDN.to_ascii(parts[0], true)).to eq(parts[5])
         end
       end
     end
