@@ -1,6 +1,5 @@
 require 'simpleidn/version'
 require 'simpleidn/uts46mapping'
-require 'unf'
 
 module SimpleIDN
   # The ConversionError is raised when an error occurs during a
@@ -223,7 +222,7 @@ module SimpleIDN
     mapped = str.codepoints.map { |cp| UTS64MAPPING.fetch(cp, cp) }
     mapped = mapped.map { |cp| TRANSITIONAL.fetch(cp, cp) } if transitional
     mapped = mapped.flatten.map { |cp| cp.chr(Encoding::UTF_8) }.join(EMPTY)
-    mapped.to_nfc
+    mapped.unicode_normalize(:nfc)
   end
 
   # Converts a UTF-8 unicode string to a punycode ACE string.
