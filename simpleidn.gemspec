@@ -14,7 +14,6 @@ Gem::Specification.new do |spec|
   spec.license       = "MIT"
 
   spec.metadata = {
-    "homepage_uri"          => spec.homepage,
     "source_code_uri"       => spec.homepage,
     "bug_tracker_uri"       => "#{spec.homepage}/issues",
     "changelog_uri"         => "#{spec.homepage}/blob/master/CHANGELOG.md",
