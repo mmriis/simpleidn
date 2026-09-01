@@ -13,11 +13,22 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/mmriis/simpleidn"
   spec.license       = "MIT"
 
-  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.metadata = {
+    "homepage_uri"          => spec.homepage,
+    "source_code_uri"       => spec.homepage,
+    "bug_tracker_uri"       => "#{spec.homepage}/issues",
+    "changelog_uri"         => "#{spec.homepage}/blob/master/CHANGELOG.md",
+    "rubygems_mfa_required" => "true"
+  }
+
+  # Ship only what is needed at runtime plus top-level docs.
+  spec.files = `git ls-files -z`.split("\x0").select do |f|
+    f.start_with?('lib/') || %w[README.md CHANGELOG.md LICENCE simpleidn.gemspec].include?(f)
+  end
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "rake", "~> 13.0.3"
-  spec.add_development_dependency "rspec", "~> 3.10"
+  spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "rspec", "~> 3.13"
 
   spec.required_ruby_version = '>=2.2'
 end
