@@ -31,6 +31,43 @@ describe "SimpleIDN" do
     it "raises when the input is an invalid ACE" do
       expect { SimpleIDN.to_unicode('xn---') }.to raise_error(SimpleIDN::ConversionError)
     end
+
+    it "raises when an ACE label decodes to the empty string" do
+      expect { SimpleIDN.to_unicode('xn--') }.to raise_error(SimpleIDN::ConversionError)
+    end
+
+    it "raises when an ACE label decodes to pure ASCII" do
+      expect { SimpleIDN.to_unicode('xn--ascii-') }.to raise_error(SimpleIDN::ConversionError)
+      expect { SimpleIDN.to_unicode('xn--unicode-.org') }.to raise_error(SimpleIDN::ConversionError)
+    end
+
+    it "should map uppercase ACE input to lowercase before decoding" do
+      expect(SimpleIDN.to_unicode("XN--MLLERRIIS-L8A.COM")).to eq("møllerriis.com")
+    end
+
+    it "should handle alternative label separators" do
+      expect(SimpleIDN.to_unicode("xn--mllerriis-l8a。com")).to eq("møllerriis.com")
+      expect(SimpleIDN.to_unicode("xn--mllerriis-l8a．com")).to eq("møllerriis.com")
+    end
+
+    it "should preserve a trailing dot" do
+      expect(SimpleIDN.to_unicode("xn--mllerriis-l8a.com.")).to eq("møllerriis.com.")
+    end
+
+    it "should return empty string for empty string" do
+      expect(SimpleIDN.to_unicode("")).to eq("")
+    end
+
+    it "should accept frozen strings" do
+      expect(SimpleIDN.to_unicode("xn--mllerriis-l8a.com".freeze)).to eq("møllerriis.com")
+    end
+
+    it "should preserve the input encoding when possible" do
+      input = "xn--mllerriis-l8a.com".encode(Encoding::UTF_16LE)
+      result = SimpleIDN.to_unicode(input)
+      expect(result.encoding).to eq(Encoding::UTF_16LE)
+      expect(result).to eq("møllerriis.com".encode(Encoding::UTF_16LE))
+    end
   end
 
   describe "to_ascii" do
@@ -68,11 +105,48 @@ describe "SimpleIDN" do
     it "should handle issue 8" do
       expect(SimpleIDN.to_ascii('verm├Âgensberater')).to eq('xn--vermgensberater-6jb1778m')
     end
+
+    it "should map uppercase input to lowercase" do
+      expect(SimpleIDN.to_ascii("MØLLERRIIS.COM")).to eq("xn--mllerriis-l8a.com")
+    end
+
+    it "should handle alternative label separators" do
+      expect(SimpleIDN.to_ascii("møllerriis。com")).to eq("xn--mllerriis-l8a.com")
+    end
+
+    it "should keep deviation characters by default (IDNA2008 / non-transitional)" do
+      expect(SimpleIDN.to_ascii("faß.de")).to eq("xn--fa-hia.de")
+    end
+
+    it "should map deviation characters in transitional mode (IDNA2003)" do
+      expect(SimpleIDN.to_ascii("faß.de", true)).to eq("fass.de")
+      expect(SimpleIDN.to_ascii("a‍b.de", true)).to eq("ab.de") # zero-width joiner is removed
+    end
+
+    it "should handle emoji domains" do
+      expect(SimpleIDN.to_ascii("😉.ws")).to eq("xn--n28h.ws")
+      expect(SimpleIDN.to_unicode("xn--n28h.ws")).to eq("😉.ws")
+    end
+
+    it "should return empty string for empty string" do
+      expect(SimpleIDN.to_ascii("")).to eq("")
+    end
+
+    it "should accept frozen strings" do
+      expect(SimpleIDN.to_ascii("møllerriis.com".freeze)).to eq("xn--mllerriis-l8a.com")
+    end
+
+    it "should preserve the input encoding" do
+      input = "møllerriis.com".encode(Encoding::UTF_16LE)
+      result = SimpleIDN.to_ascii(input)
+      expect(result.encoding).to eq(Encoding::UTF_16LE)
+      expect(result).to eq("xn--mllerriis-l8a.com".encode(Encoding::UTF_16LE))
+    end
   end
 
   describe "uts #46" do
     it "should pass all test cases" do
-      IO.foreach(File.join(File.dirname(File.expand_path(__FILE__)), 'IdnaTestV2.txt')) do |line|
+      IO.foreach(File.join(File.dirname(File.expand_path(__FILE__)), 'IdnaTestV2.txt'), :encoding => 'UTF-8') do |line|
         line = line.split('#').first
         next if line.nil?
         parts = line.split(';').map{|p|p.strip}

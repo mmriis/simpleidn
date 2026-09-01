@@ -264,7 +264,17 @@ module SimpleIDN
       next if s.empty? && !content
       content = true
 
-      out << (s.start_with?(ACE_PREFIX) ? Punycode.decode(s[ACE_PREFIX.length..-1]) : s)
+      if s.start_with?(ACE_PREFIX)
+        decoded = Punycode.decode(s[ACE_PREFIX.length..-1])
+        # UTS46 Processing step 4.2: a Punycode label must decode to a
+        # non-empty string that contains at least one non-ASCII code point.
+        if decoded.codepoints.none? { |cp| cp > ASCII_MAX }
+          raise(ConversionError, "Punycode label must decode to non-ASCII text")
+        end
+        out << decoded
+      else
+        out << s
+      end
     end
 
     # If all we had were dots; return "."
